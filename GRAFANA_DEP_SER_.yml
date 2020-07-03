@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  grafa 
+  labels: 
+    env: prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: grafanapod
+  template:
+    metadata:
+      name: mygrafa
+      labels:
+        type: grafanapod
+    spec:
+      containers:
+        - image:  manas0228/grafana:latest
+          name:  grafanacon
+          imagePullPolicy: IfNotPresent 
+          volumeMounts:
+            - name: grafa-vol1
+              mountPath: /usr/share/grafana/data
+          ports:
+          - containerPort: 3000
+      volumes:
+       - name: grafa-vol1
+         persistentVolumeClaim:
+             claimName: grafa-vol1
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafa-vol1
+  labels:
+    name: webpvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1 
+kind: Service 
+metadata: 
+    name: mysvc
+spec:
+  type: NodePort
+  selector:
+     type: grafanapod
+  ports:
+  - port:  3000
+    nodePort: 30300
+    protocol: TCP 
