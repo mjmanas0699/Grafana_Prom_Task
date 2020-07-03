@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  prome 
+  labels: 
+    env: prome
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      type: promepod
+  template:
+    metadata:
+      name: myprome
+      labels:
+        type: promepod
+    spec:
+      containers:
+        - image:  manas0228/prometheus:latest
+          imagePullPolicy: IfNotPresent 
+          name:  promecon
+          volumeMounts: 
+            - name: prome-vol1
+              mountPath: /data
+            - name:  prome-config
+              mountPath: /root/prome/prometheus-2.18.1.linux-amd64/prometheus.yml
+              subPath: prometheus.yml 
+          ports:
+          - containerPort: 9090
+      volumes:
+       - name: prome-vol1
+         persistentVolumeClaim:
+             claimName: prome-vol1
+       - name:  prome-config
+         configMap:
+            name: myconfigmap
+            defaultMode: 0744
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prome-vol1
+  labels:
+    name: prom
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1 
+kind: Service 
+metadata: 
+    name: promsvc
+spec:
+  type: NodePort
+  selector:
+     type: promepod
+  ports:
+  - port:  9090 
+    nodePort: 30090
+    protocol: TCP
